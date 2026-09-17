@@ -1,13 +1,16 @@
 
 using FluentResults;
+using GeradorDeCertificados.Aplicacao.Compartilhado;
 
 namespace GeradorDeCertificados.Aplicacao.Usuarios.Util;
 
 public static class ErrosDeUsuario
 {
     public static Error CredenciaisInvalidas()
-        => new Error("Email ou senha inválidos.")
-            .WithMetadata("Codigo", "Usuario.CredenciaisInvalidas");
+        => TipoErro.NaoAutenticado.ObterMetadados(
+            string.Empty,
+            "Email ou senha inválidos."
+        );
 
     public static Error EmailInvalido()
         => new Error("O email informado é inválido.")
@@ -35,21 +38,25 @@ public static class ErrosDeUsuario
         );
 
     internal static IError ConflitoDeIdentidade(
-        string mensagem)
-
-            => new Error(mensagem);
-
-
+        string mensagem
+    )
+        => TipoErro.Conflito.ObterMetadados(
+            string.Empty,
+            mensagem
+        );
 
     internal static IError ValidacaoDeIdentidade(
         string campo,
         string mensagem
     )
-        => new Error($"{campo}: {mensagem}");
+        => TipoErro.Validacao.ObterMetadados(
+            campo,
+            mensagem
+        );
 
     internal static IError UsuarioNaoEncontrado()
-
-
-        => new Error("Usuário não encontrado.");
-
+        => TipoErro.NaoEncontrado.ObterMetadados(
+            string.Empty,
+            "Usuário não encontrado."
+        );
 }

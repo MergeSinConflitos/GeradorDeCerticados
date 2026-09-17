@@ -145,7 +145,7 @@ public sealed class CadastrarUsuarioCommandHandlerTests
         // Assert
         Assert.IsTrue(resultado.IsFailed);
         Assert.AreEqual(
-            "Email: " + mensagem,
+            mensagem,
             resultado.Errors.First().Message
         );
     }
@@ -192,7 +192,7 @@ public sealed class CadastrarUsuarioCommandHandlerTests
         // Assert
         Assert.IsTrue(resultado.IsFailed);
         Assert.AreEqual(
-            "Senha: " + mensagem,
+            mensagem,
             resultado.Errors.First().Message
         );
     }
@@ -239,7 +239,7 @@ public sealed class CadastrarUsuarioCommandHandlerTests
         // Assert
         Assert.IsTrue(resultado.IsFailed);
         Assert.AreEqual(
-            "Senha: " + mensagem,
+            mensagem,
             resultado.Errors.First().Message
         );
     }
@@ -286,7 +286,7 @@ public sealed class CadastrarUsuarioCommandHandlerTests
         // Assert
         Assert.IsTrue(resultado.IsFailed);
         Assert.AreEqual(
-            "Senha: " + mensagem,
+            mensagem,
             resultado.Errors.First().Message
         );
     }

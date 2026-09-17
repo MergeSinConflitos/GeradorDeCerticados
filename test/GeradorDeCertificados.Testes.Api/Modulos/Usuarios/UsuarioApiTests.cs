@@ -237,7 +237,7 @@ public sealed class UsuariosApiTests : ApiTestBase
 
         // Assert
         Assert.AreEqual(
-            HttpStatusCode.BadRequest,
+            HttpStatusCode.Unauthorized,
             response.StatusCode
         );
     }
@@ -298,7 +298,7 @@ public sealed class UsuariosApiTests : ApiTestBase
 
         // Assert
         Assert.AreEqual(
-            HttpStatusCode.BadRequest,
+            HttpStatusCode.Unauthorized,
             response.StatusCode
         );
     }
