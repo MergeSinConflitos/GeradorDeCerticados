@@ -50,6 +50,6 @@ public static class ErrosDeUsuario
     internal static IError UsuarioNaoEncontrado()
 
 
-        => new Error("Usuario não encontrado");
+        => new Error("Usuário não encontrado.");
 
 }
