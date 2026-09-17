@@ -23,5 +23,6 @@ public interface IGerenciadorDeIdentidade
         string email,
         string senha
     );
+    Task<UsuarioDto> ObterPorIdAsync(Guid usarioId);
     Task ExcluirAsync(Guid usuarioId);
 }

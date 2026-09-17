@@ -31,6 +31,23 @@ public sealed class GerenciadorDeIdentidade(
         );
     }
 
+    public async Task<UsuarioDto?> ObterPorIdAsync(
+        Guid usuarioId
+    )
+    {
+        var usuario = await userManager.FindByIdAsync(
+            usuarioId.ToString()
+        );
+
+        if (usuario is null)
+            return null;
+
+        return new UsuarioDto(
+            usuario.Id,
+            usuario.Email!
+        );
+    }
+
     public async Task<UsuarioDto?> ChecarValidadeDeSenhaAsync(
         string email,
         string senha
@@ -108,4 +125,6 @@ public sealed class GerenciadorDeIdentidade(
             )
         };
     }
+
+
 }

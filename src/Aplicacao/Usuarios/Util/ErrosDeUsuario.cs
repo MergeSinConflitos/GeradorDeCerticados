@@ -46,4 +46,10 @@ public static class ErrosDeUsuario
         string mensagem
     )
         => new Error($"{campo}: {mensagem}");
+
+    internal static IError UsuarioNaoEncontrado()
+
+
+        => new Error("Usuario não encontrado");
+
 }
