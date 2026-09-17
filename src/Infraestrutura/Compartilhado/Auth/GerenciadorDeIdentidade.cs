@@ -67,26 +67,45 @@ public sealed class GerenciadorDeIdentidade(
 
     private static Exception CriarErro(IdentityResult resultado)
     {
-        if (resultado.Errors.Any(
-            erro => erro.Code is "DuplicateEmail" or "DuplicateUserName"))
-        {
-            return new ConflitoDeIdentidadeException(
-                "Já existe um usuário cadastrado com este email."
-            );
-        }
-
         var erro = resultado.Errors.First();
 
-        string campo = erro.Code.StartsWith(
-            "Password",
-            StringComparison.Ordinal
-        )
-            ? "Senha"
-            : "Email";
+        //Mapeia os erros do identity(por padrão em ingles)
+        //para conseguir entender mensagens em portugues
+        return erro.Code switch
+        {
+            "DuplicateEmail" or "DuplicateUserName"
+                => new ConflitoDeIdentidadeException(
+                    "Já existe um usuário cadastrado com este email."
+                ),
 
-        return new ValidacaoDeIdentidadeException(
-            campo,
-            erro.Description
-        );
+            "InvalidEmail"
+                => new ValidacaoDeIdentidadeException(
+                    "Email",
+                    "O email informado é inválido."
+                ),
+
+            "PasswordTooShort"
+                => new ValidacaoDeIdentidadeException(
+                    "Senha",
+                    "A senha deve possuir no mínimo 8 caracteres."
+                ),
+
+            "PasswordRequiresDigit"
+                => new ValidacaoDeIdentidadeException(
+                    "Senha",
+                    "A senha deve conter pelo menos um dígito."
+                ),
+
+            "PasswordRequiresNonAlphanumeric"
+                => new ValidacaoDeIdentidadeException(
+                    "Senha",
+                    "A senha deve conter pelo menos um caractere não alfanumérico."
+                ),
+
+            _ => new ValidacaoDeIdentidadeException(
+                "Usuario",
+                erro.Description
+            )
+        };
     }
 }
