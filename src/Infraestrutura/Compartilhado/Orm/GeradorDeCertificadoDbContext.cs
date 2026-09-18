@@ -1,3 +1,4 @@
+using GeradorDeCertificados.Dominio.Modulos.Cursos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ public sealed class GeradorDeCertificadoDbContext(
     // Exemplos dos DbSets que serão adicionados conforme
     // as entidades do projeto forem implementadas.
 
-    // public DbSet<Curso> Cursos => Set<Curso>();
+    public DbSet<Curso> Cursos => Set<Curso>();
     // public DbSet<SolicitacaoCertificado> Solicitacoes => Set<SolicitacaoCertificado>();
     // public DbSet<Certificado> Certificados => Set<Certificado>();
 
