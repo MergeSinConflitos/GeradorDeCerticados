@@ -13,6 +13,11 @@
     <PackageReference Include="NBuilder" Version="6.1.0" />
    </ItemGroup>
 
+ <ItemGroup>
+   <ProjectReference Include="..\..\src\Dominio\GeradorDeCertificados.Dominio.csproj" />
+   <ProjectReference Include="..\..\src\Infraestrutura\GeradorDeCertificados.Infraestrutura.csproj" />
+ </ItemGroup>
+
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
