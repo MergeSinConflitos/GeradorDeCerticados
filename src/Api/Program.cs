@@ -63,9 +63,7 @@ builder.Services
 // - Repositórios
 // - Gerenciador de identidade
 // - Outras dependências da infraestrutura.
-builder.Services.AddInfrastructureServices(
-    builder.Configuration
-);
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 
 // ============================================================
@@ -78,9 +76,7 @@ builder.Services.AddInfrastructureServices(
 // - Handlers
 // - MassTransit
 // - RabbitMQ
-builder.Services.AddApplicationServices(
-    builder.Configuration
-);
+builder.Services.AddApplicationServices(builder.Configuration);
 
 
 // ============================================================
