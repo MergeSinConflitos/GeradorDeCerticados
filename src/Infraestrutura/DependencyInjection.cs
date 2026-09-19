@@ -1,6 +1,8 @@
 using GeradorDeCertificados.Dominio.Compartilhado.Auth;
+using GeradorDeCertificados.Dominio.Modulos.Cursos;
 using GeradorDeCertificados.Infraestrutura.Compartilhado.Auth;
 using GeradorDeCertificados.Infraestrutura.Compartilhado.Orm;
+using GeradorDeCertificados.Infraestrutura.Modulos.Cursos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,9 +16,10 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration
     )
-    {
+    {   
+        services.AddScoped<IRepositorioCurso, RepositorioCursoEmOrm>();
+        
         services.AddDataProtection();
-
         services.AddIdentityCore<IdentityUser<Guid>>(options =>
         {
             options.User.RequireUniqueEmail = true;
