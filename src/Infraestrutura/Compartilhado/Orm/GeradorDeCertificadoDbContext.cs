@@ -1,3 +1,4 @@
+using GeradorDeCertificados.Dominio.Compartilhado.Auth;
 using GeradorDeCertificados.Dominio.Modulos.Cursos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;

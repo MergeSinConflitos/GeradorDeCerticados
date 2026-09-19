@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GeradorDeCertificados.Infraestrutura.Compartilhado.Orm.Migrations
 {
     /// <inheritdoc />
-    public partial class Add_TBCurso : Migration
+    public partial class Inicial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
