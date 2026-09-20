@@ -21,4 +21,14 @@ public sealed class RepositorioSolicitacaoCertificadoEmOrm(
                     x.Status != StatusProcessamento.Falha,
                 cancellationToken);
     }
+
+    public async Task<SolicitacaoCertificado?> SelecionarPorCursoIdAsync(Guid cursoId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext
+    .Set<SolicitacaoCertificado>()
+    .FirstOrDefaultAsync(
+        x => x.CursoId == cursoId,
+        cancellationToken);
+
+    }
 }
