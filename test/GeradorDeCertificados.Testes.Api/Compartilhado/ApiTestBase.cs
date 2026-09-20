@@ -1,5 +1,9 @@
+using GeradorDeCertificados.Dominio.Modulos.Certificados;
+using GeradorDeCertificados.Dominio.Modulos.Cursos;
+using GeradorDeCertificados.Infraestrutura.Compartilhado.Orm;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 
@@ -14,10 +18,10 @@ public abstract class ApiTestBase
     // Usuários gerenciados pelo Identity
     private readonly List<Guid> usuariosCriados = [];
 
-    // Futuramente:
-    // private readonly List<Guid> certificadosCriados = [];
-    // private readonly List<Guid> modelosCriados = [];
-    // private readonly List<Guid> ... = [];
+    // Entidades de domínio
+    private readonly List<Guid> cursosCriados = [];
+    private readonly List<Guid> solicitacoesCriadas = [];
+    private readonly List<Guid> certificadosCriados = [];
 
     [TestInitialize]
     public void Inicializar()
@@ -30,11 +34,20 @@ public abstract class ApiTestBase
         usuariosCriados.Add(usuarioId);
     }
 
-    // Futuramente:
-    // protected void RegistrarCertificadoCriado(Guid certificadoId)
-    // {
-    //     certificadosCriados.Add(certificadoId);
-    // }
+    protected void RegistrarCursoCriado(Guid cursoId)
+    {
+        cursosCriados.Add(cursoId);
+    }
+
+    protected void RegistrarSolicitacaoCriada(Guid solicitacaoId)
+    {
+        solicitacoesCriadas.Add(solicitacaoId);
+    }
+
+    protected void RegistrarCertificadoCriado(Guid certificadoId)
+    {
+        certificadosCriados.Add(certificadoId);
+    }
 
     [TestCleanup]
     public async Task Finalizar()
@@ -49,6 +62,47 @@ public abstract class ApiTestBase
         UserManager<IdentityUser<Guid>> userManager =
             scope.ServiceProvider
                 .GetRequiredService<UserManager<IdentityUser<Guid>>>();
+
+        GeradorDeCertificadoDbContext dbContext =
+            scope.ServiceProvider
+                .GetRequiredService<GeradorDeCertificadoDbContext>();
+
+        // ============================================================
+        // ENTIDADES DE DOMÍNIO
+        // ============================================================
+
+        foreach (Guid certificadoId in certificadosCriados)
+        {
+            Console.WriteLine(
+                $"Removendo certificado: {certificadoId}"
+            );
+
+            await dbContext.Set<Certificado>()
+                .Where(x => x.Id == certificadoId)
+                .ExecuteDeleteAsync();
+        }
+
+        foreach (Guid solicitacaoId in solicitacoesCriadas)
+        {
+            Console.WriteLine(
+                $"Removendo solicitação: {solicitacaoId}"
+            );
+
+            await dbContext.Set<SolicitacaoCertificado>()
+                .Where(x => x.Id == solicitacaoId)
+                .ExecuteDeleteAsync();
+        }
+
+        foreach (Guid cursoId in cursosCriados)
+        {
+            Console.WriteLine(
+                $"Removendo curso: {cursoId}"
+            );
+
+            await dbContext.Set<Curso>()
+                .Where(x => x.Id == cursoId)
+                .ExecuteDeleteAsync();
+        }
 
         // ============================================================
         // IDENTITY
@@ -75,28 +129,6 @@ public abstract class ApiTestBase
                 );
             }
         }
-
-        // ============================================================
-        // ENTIDADES DE DOMÍNIO
-        // ============================================================
-        //
-        // Futuramente, quando existirem entidades de domínio,
-        // podemos adicionar aqui os respectivos DbSets/repositórios.
-        //
-        // Exemplo:
-        //
-        // foreach (Guid certificadoId in certificadosCriados)
-        // {
-        //     await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
-        //         DELETE FROM "TBCertificados"
-        //         WHERE "Id" = {certificadoId};
-        //         """);
-        // }
-        //
-        // Se houver relacionamentos entre entidades, a ordem de
-        // exclusão deverá respeitar as chaves estrangeiras.
-        //
-        // ============================================================
 
         Console.WriteLine("=== CLEANUP FINALIZADO ===");
     }
