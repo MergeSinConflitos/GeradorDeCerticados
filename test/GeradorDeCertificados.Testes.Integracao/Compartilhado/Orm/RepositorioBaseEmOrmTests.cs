@@ -1,5 +1,7 @@
 using FizzWare.NBuilder;
+using GeradorDeCertificados.Dominio.Modulos.Certificados;
 using GeradorDeCertificados.Infraestrutura.Compartilhado.Orm;
+using GeradorDeCertificados.Infraestrutura.Modulos.Certificados;
 using GeradorDeCertificados.Testes.Integracao.Compartilhado.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +15,8 @@ public abstract class RepositorioBaseEmOrmTests
 
     // Use de exemplo quando implementar
     // protected RepositorioCursoEmOrm repositorioCurso = null!;
+    protected RepositorioCertificadoEmOrm repositorioCertificado = null!;
+    protected RepositorioSolicitacaoCertificadoEmOrm repositorioSolicitacaoCertificado = null!;
 
 
     // =========================================================
@@ -46,6 +50,59 @@ public abstract class RepositorioBaseEmOrmTests
             }
         );
         */
+
+        //==================================================
+        // CERTIFICADO
+        //==================================================
+
+        repositorioCertificado = new RepositorioCertificadoEmOrm(dbContext);
+
+        BuilderSetup.SetCreatePersistenceMethod<Certificado>(
+            certificado => repositorioCertificado
+            .CadastrarAsync(certificado)
+            .GetAwaiter()
+            .GetResult()
+        );
+
+        BuilderSetup.SetCreatePersistenceMethod<IList<Certificado>>(
+            certificados =>
+            {
+                foreach (Certificado certificado in certificados)
+                {
+                    repositorioCertificado
+                    .CadastrarAsync(certificado)
+                    .GetAwaiter()
+                    .GetResult();
+                }
+            }
+        );
+
+        //=====================================================
+        // SOLICITACAO CERTIFICADO
+        //=====================================================
+
+        repositorioSolicitacaoCertificado =
+    new RepositorioSolicitacaoCertificadoEmOrm(dbContext);
+
+        BuilderSetup.SetCreatePersistenceMethod<SolicitacaoCertificado>(
+        solicitacao => repositorioSolicitacaoCertificado
+            .CadastrarAsync(solicitacao)
+            .GetAwaiter()
+            .GetResult()
+    );
+
+        BuilderSetup.SetCreatePersistenceMethod<IList<SolicitacaoCertificado>>(
+        solicitacoes =>
+        {
+            foreach (SolicitacaoCertificado solicitacao in solicitacoes)
+            {
+                repositorioSolicitacaoCertificado
+                    .CadastrarAsync(solicitacao)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+        }
+    );
     }
 
     // =========================================================

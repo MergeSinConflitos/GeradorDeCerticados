@@ -13,6 +13,7 @@ public sealed class CertificadoTests
         Certificado certificado = new(
             Guid.NewGuid(),
             Guid.NewGuid(),
+            Guid.NewGuid(),
             string.Empty);
 
         // Act
@@ -32,6 +33,7 @@ public sealed class CertificadoTests
         Certificado certificado = new(
             Guid.NewGuid(),
             Guid.NewGuid(),
+            Guid.NewGuid(),
             nomeAluno);
 
         // Act
@@ -49,6 +51,7 @@ public sealed class CertificadoTests
         Certificado certificado = new(
             Guid.NewGuid(),
             Guid.Empty,
+            Guid.NewGuid(),
             "João da Silva");
 
         // Act
@@ -66,6 +69,7 @@ public sealed class CertificadoTests
         Certificado certificado = new(
             Guid.NewGuid(),
             Guid.NewGuid(),
+            Guid.NewGuid(),
             "João da Silva");
 
         // Act
@@ -80,6 +84,7 @@ public sealed class CertificadoTests
     {
         // Arrange
         Certificado certificado = new(
+            Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
             "João da Silva");
@@ -105,6 +110,7 @@ public sealed class CertificadoTests
         Certificado certificado = new(
             Guid.NewGuid(),
             Guid.NewGuid(),
+            Guid.NewGuid(),
             "João da Silva");
 
         // Act
@@ -112,5 +118,26 @@ public sealed class CertificadoTests
 
         // Assert
         Assert.AreEqual(StatusCertificado.Falha, certificado.Status);
+    }
+
+    [TestMethod]
+    public void DeveCriar_CertificadoComSolicitacaoInformada()
+    {
+        // Arrange
+        Guid solicitacaoCertificadoId = Guid.NewGuid();
+
+        Certificado certificado = new(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            solicitacaoCertificadoId,
+            "João da Silva");
+
+        // Act
+        Guid resultado = certificado.SolicitacaoCertificadoId;
+
+        // Assert
+        Assert.AreEqual(
+            solicitacaoCertificadoId,
+            resultado);
     }
 }

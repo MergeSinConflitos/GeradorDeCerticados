@@ -150,6 +150,7 @@ public sealed class SolicitacaoCertificadoTests
         return new Certificado(
             Guid.NewGuid(),
             Guid.NewGuid(),
+            Guid.NewGuid(),
             "João da Silva");
     }
 }

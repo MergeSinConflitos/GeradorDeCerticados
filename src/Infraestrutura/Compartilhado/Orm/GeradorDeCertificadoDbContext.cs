@@ -1,4 +1,5 @@
 using GeradorDeCertificados.Dominio.Compartilhado.Auth;
+using GeradorDeCertificados.Dominio.Modulos.Certificados;
 using GeradorDeCertificados.Dominio.Modulos.Cursos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -15,8 +16,8 @@ public sealed class GeradorDeCertificadoDbContext(
     // as entidades do projeto forem implementadas.
 
     public DbSet<Curso> Cursos => Set<Curso>();
-    // public DbSet<SolicitacaoCertificado> Solicitacoes => Set<SolicitacaoCertificado>();
-    // public DbSet<Certificado> Certificados => Set<Certificado>();
+    public DbSet<SolicitacaoCertificado> Solicitacoes => Set<SolicitacaoCertificado>();
+    public DbSet<Certificado> Certificados => Set<Certificado>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

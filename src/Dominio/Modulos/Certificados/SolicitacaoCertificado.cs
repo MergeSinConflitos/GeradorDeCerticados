@@ -4,17 +4,17 @@ namespace GeradorDeCertificados.Dominio.Modulos.Certificados;
 
 public sealed class SolicitacaoCertificado : EntidadeBase<SolicitacaoCertificado>
 {
-    public Guid CursoId { get; private set; }
+    public Guid CursoId { get; set; }
 
-    public StatusProcessamento Status { get; private set; }
+    public StatusProcessamento Status { get; set; }
 
-    public string? CaminhoZip { get; private set; }
+    public string? CaminhoZip { get; set; }
 
-    public DateOnly DataDeCriacao { get; private set; }
+    public DateOnly DataDeCriacao { get; set; }
 
-    public DateOnly? DataDeConclusao { get; private set; }
+    public DateOnly? DataDeConclusao { get; set; }
 
-    public List<Certificado> Certificados { get; private set; } = [];
+    public List<Certificado> Certificados { get; set; } = [];
 
     public SolicitacaoCertificado(
         Guid id,
