@@ -1,6 +1,7 @@
 using GeradorDeCertificados.Dominio.Compartilhado.Auth;
 using GeradorDeCertificados.Dominio.Modulos.Certificados;
 using GeradorDeCertificados.Dominio.Modulos.Cursos;
+using GeradorDeCertificados.Infraestrutura.Certificados;
 using GeradorDeCertificados.Infraestrutura.Compartilhado.Auth;
 using GeradorDeCertificados.Infraestrutura.Compartilhado.Orm;
 using GeradorDeCertificados.Infraestrutura.Modulos.Certificados;
@@ -66,9 +67,8 @@ public static class DependencyInjection
             }
         });
 
-        services.AddScoped<
-            IGerenciadorDeIdentidade,
-            GerenciadorDeIdentidade
-        >();
+        services.AddScoped<IGerenciadorDeIdentidade,GerenciadorDeIdentidade>();
+        services.AddScoped<IArmazenadorDeArquivo, ArmazenadorDeArquivo>();
+        services.AddSingleton<IEmpacotadorDeArquivo, EmpacotadorDeArquivosZip>();
     }
 }

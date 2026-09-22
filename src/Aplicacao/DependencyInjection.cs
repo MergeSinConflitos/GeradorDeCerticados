@@ -1,3 +1,4 @@
+using GeradorDeCertificados.Aplicacao.Modulos.Certificados;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,10 +26,19 @@ public static class DependencyInjection
             );
 
         services.AddMassTransit(config =>
-        {
+        {   
+
+            //Consummer
+            config.AddConsumer<GerarCertificadosConsumer>();
+
+
             config.UsingRabbitMq((context, cfg) =>
             {
                 cfg.Host(new Uri(rabbitMqConnectionString));
+
+                cfg.ReceiveEndpoint("certificados-created", endpoint =>{ 
+                    endpoint.ConfigureConsumer<GerarCertificadosConsumer>(context);
+                });
             });
         });
 
@@ -37,5 +47,7 @@ public static class DependencyInjection
             options.WaitUntilStarted = true;
             options.StartTimeout = TimeSpan.FromSeconds(30);
         });
+
+        services.AddSingleton<GeradorPdfCertificado>();
     }
 }

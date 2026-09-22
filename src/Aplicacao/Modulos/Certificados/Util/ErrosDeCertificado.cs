@@ -40,4 +40,13 @@ public static class ErrosDeCertificado
                 nameof(TipoErro),
                 TipoErro.Conflito);
     }
+
+    public static Error ProcessamentoNaoConcluido()
+    {
+        return new Error(
+                "O processamento de certificados ainda não foi concluído.")
+            .WithMetadata(
+                nameof(TipoErro),
+                TipoErro.Conflito);
+    }
 }

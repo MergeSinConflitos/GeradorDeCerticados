@@ -14,7 +14,7 @@ public sealed class Certificado : EntidadeBase<Certificado>
 
     public DateOnly? DataDeGeracao { get; set; }
 
-    public StatusCertificado Status { get; set; }
+    public StatusCertificado Status { get; set; } = StatusCertificado.Pendente;
 
     public Certificado(
         Guid id,

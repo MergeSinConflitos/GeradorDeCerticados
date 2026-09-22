@@ -1,10 +1,12 @@
 using FluentResults;
+using MassTransit;
 using MediatR;
 using GeradorDeCertificados.Aplicacao.Modulos.Certificados.DTOs;
 using GeradorDeCertificados.Aplicacao.Modulos.Certificados.Util;
 using GeradorDeCertificados.Dominio.Modulos.Certificados;
 using GeradorDeCertificados.Dominio.Modulos.Cursos;
 using GeradorDeCertificados.Dominio.Compartilhado;
+using GeradorDeCertificados.Aplicacao.Modulos.Certificados.Mensageria;
 
 namespace GeradorDeCertificados.Aplicacao.Modulos.Certificados;
 
@@ -15,29 +17,30 @@ public sealed record SolicitarCertificadosCommand(
 
 public sealed class SolicitarCertificadosCommandHandler(
     IRepositorioCurso repositorioCurso,
-    IRepositorioSolicitacaoCertificado repositorioSolicitacaoCertificado
+    IRepositorioSolicitacaoCertificado repositorioSolicitacaoCertificado,
+    IPublishEndpoint publishEndpoint
 ) : IRequestHandler<
     SolicitarCertificadosCommand,
     Result<SolicitacaoCertificadoDto>>
 {
     public async Task<Result<SolicitacaoCertificadoDto>> Handle(
-        SolicitarCertificadosCommand request,
+        SolicitarCertificadosCommand command,
         CancellationToken cancellationToken)
     {
         Curso? curso = await repositorioCurso.SelecionarPorIdAsync(
-            request.CursoId,
+            command.CursoId,
             cancellationToken);
 
         if (curso is null)
         {
             return Result.Fail(
-                ErrosDeCertificado.NaoEncontrado(request.CursoId));
+                ErrosDeCertificado.NaoEncontrado(command.CursoId));
         }
 
         bool processamentoEmAndamento =
             await repositorioSolicitacaoCertificado
                 .ExisteProcessamentoEmAndamentoAsync(
-                    request.CursoId,
+                    command.CursoId,
                     cancellationToken);
 
         if (processamentoEmAndamento)
@@ -48,11 +51,11 @@ public sealed class SolicitarCertificadosCommandHandler(
 
         Guid solicitacaoId = Guid.CreateVersion7();
 
-        List<Certificado> certificados = request.NomesAlunos
+        List<Certificado> certificados = command.NomesAlunos
             .Select(nomeAluno =>
                 new Certificado(
                     Guid.CreateVersion7(),
-                    request.CursoId,
+                    command.CursoId,
                     solicitacaoId,
                     nomeAluno))
             .ToList();
@@ -60,7 +63,7 @@ public sealed class SolicitarCertificadosCommandHandler(
         SolicitacaoCertificado solicitacao =
             new(
                 solicitacaoId,
-                request.CursoId,
+                command.CursoId,
                 certificados);
 
 
@@ -77,8 +80,11 @@ public sealed class SolicitarCertificadosCommandHandler(
             solicitacao,
             cancellationToken);
 
-        return Result.Ok(
-            MapearParaDto(solicitacao));
+        await publishEndpoint.Publish(
+            new GerarCertificadosMessage(solicitacao.Id),
+            cancellationToken);
+
+        return Result.Ok(MapearParaDto(solicitacao));
     }
 
     private static SolicitacaoCertificadoDto MapearParaDto(

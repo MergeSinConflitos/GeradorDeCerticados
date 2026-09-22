@@ -1,0 +1,3 @@
+namespace GeradorDeCertificados.Aplicacao.Modulos.Certificados.Mensageria;
+
+public sealed record GerarCertificadosMessage(Guid SolicitacaoCertificadoId);

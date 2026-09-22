@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
+using GeradorDeCertificados.Aplicacao.Modulos.Certificados;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -238,6 +239,7 @@ builder.Services.AddSwaggerGen(options =>
 // ============================================================
 // CONSTRUÇÃO DA APLICAÇÃO
 // ============================================================
+GeradorPdfCertificado.ConfiguracaoQuestPdf();
 var app = builder.Build();
 
 
