@@ -1,6 +1,7 @@
 using GeradorDeCertificados.Aplicacao.Modulos.Certificados;
 using GeradorDeCertificados.Dominio.Modulos.Certificados;
 using GeradorDeCertificados.Dominio.Modulos.Cursos;
+using MassTransit;
 using Moq;
 
 namespace GeradorDeCertificados.Testes.Aplicacao.Modulos.Certificados;
@@ -11,6 +12,7 @@ public sealed class SolicitarCertificadosCommandHandlerTests
     private Mock<IRepositorioCurso> repositorioCurso = null!;
     private Mock<IRepositorioSolicitacaoCertificado> repositorioSolicitacaoCertificado = null!;
     private SolicitarCertificadosCommandHandler handler = null!;
+    private Mock<IPublishEndpoint> enpoint = null!;
 
     [TestInitialize]
     public void Setup()
@@ -20,9 +22,12 @@ public sealed class SolicitarCertificadosCommandHandlerTests
         repositorioSolicitacaoCertificado =
             new Mock<IRepositorioSolicitacaoCertificado>();
 
+        enpoint = new Mock<IPublishEndpoint>();
+
         handler = new SolicitarCertificadosCommandHandler(
             repositorioCurso.Object,
-            repositorioSolicitacaoCertificado.Object);
+            repositorioSolicitacaoCertificado.Object,
+            enpoint.Object);
     }
 
     [TestMethod]

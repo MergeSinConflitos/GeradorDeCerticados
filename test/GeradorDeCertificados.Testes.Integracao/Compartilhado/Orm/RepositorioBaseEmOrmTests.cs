@@ -1,7 +1,9 @@
 using FizzWare.NBuilder;
 using GeradorDeCertificados.Dominio.Modulos.Certificados;
+using GeradorDeCertificados.Dominio.Modulos.Cursos;
 using GeradorDeCertificados.Infraestrutura.Compartilhado.Orm;
 using GeradorDeCertificados.Infraestrutura.Modulos.Certificados;
+using GeradorDeCertificados.Infraestrutura.Modulos.Cursos;
 using GeradorDeCertificados.Testes.Integracao.Compartilhado.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +16,7 @@ public abstract class RepositorioBaseEmOrmTests
     // =========================================================
 
     // Use de exemplo quando implementar
-    // protected RepositorioCursoEmOrm repositorioCurso = null!;
+    protected RepositorioCursoEmOrm repositorioCurso = null!;
     protected RepositorioCertificadoEmOrm repositorioCertificado = null!;
     protected RepositorioSolicitacaoCertificadoEmOrm repositorioSolicitacaoCertificado = null!;
 
@@ -27,7 +29,7 @@ public abstract class RepositorioBaseEmOrmTests
     {
         dbContext = CriarDbContext(Guid.NewGuid());
 
-        /*Use de exemplo quando implementar
+        //Use de exemplo quando implementar
         repositorioCurso = new RepositorioCursoEmOrm(dbContext);
 
         BuilderSetup.SetCreatePersistenceMethod<Curso>(
@@ -38,7 +40,7 @@ public abstract class RepositorioBaseEmOrmTests
         );
 
         BuilderSetup.SetCreatePersistenceMethod<IList<Curso>>(
-            clientes =>
+            cursos =>
             {
                 foreach (Curso curso in cursos)
                 {
@@ -49,7 +51,7 @@ public abstract class RepositorioBaseEmOrmTests
                 }
             }
         );
-        */
+
 
         //==================================================
         // CERTIFICADO

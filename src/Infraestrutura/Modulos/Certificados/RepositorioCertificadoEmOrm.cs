@@ -9,10 +9,13 @@ public sealed class RepositorioCertificadoEmOrm(
     GeradorDeCertificadoDbContext dbContext
 ) : RepositorioBaseEmOrm<Certificado>(dbContext), IRepositorioCertificado
 {
-    public async Task<List<Certificado>> ListarPorCursoIdAsync(Guid cursoId, CancellationToken cancellationToken = default)
+    public async Task<List<Certificado>> ListarPorCursoIdAsync(
+     Guid cursoId,
+     CancellationToken cancellationToken = default)
     {
         return await dbContext.Set<Certificado>()
-         .Where(x => x.CursoId == cursoId)
-         .ToListAsync(cancellationToken);
+            .Where(x => x.CursoId == cursoId)
+            .OrderBy(x => x.Id)
+            .ToListAsync(cancellationToken);
     }
 }

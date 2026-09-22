@@ -270,30 +270,36 @@ public sealed class CertificadosApiTests : ApiTestBase
         );
 
         // Act
-        HttpResponseMessage response =
-            await Client.GetAsync(
-                $"/cursos/{cursoId}/status"
+        StatusSolicitacaoResponse? resultado = null;
+
+        for (int tentativa = 0; tentativa < 20; tentativa++)
+        {
+            HttpResponseMessage response =
+                await Client.GetAsync(
+                    $"/cursos/{cursoId}/status"
+                );
+
+            Assert.AreEqual(
+                HttpStatusCode.OK,
+                response.StatusCode
             );
 
-        string corpo =
-            await response.Content.ReadAsStringAsync();
+            resultado =
+                await response.Content
+                    .ReadFromJsonAsync<StatusSolicitacaoResponse>();
 
-        Console.WriteLine(
-            $"STATUS: {(int)response.StatusCode} - {response.StatusCode}"
-        );
+            Assert.IsNotNull(resultado);
 
-        Console.WriteLine($"CORPO: {corpo}");
+            if (resultado.Status == StatusProcessamento.Concluido ||
+                resultado.Status == StatusProcessamento.Falha)
+            {
+                break;
+            }
+
+            await Task.Delay(100);
+        }
 
         // Assert
-        Assert.AreEqual(
-            HttpStatusCode.OK,
-            response.StatusCode
-        );
-
-        StatusSolicitacaoResponse? resultado =
-            await response.Content
-                .ReadFromJsonAsync<StatusSolicitacaoResponse>();
-
         Assert.IsNotNull(resultado);
 
         Assert.AreEqual(
@@ -302,7 +308,7 @@ public sealed class CertificadosApiTests : ApiTestBase
         );
 
         Assert.AreEqual(
-            StatusProcessamento.Pendente,
+            StatusProcessamento.Concluido,
             resultado.Status
         );
     }
@@ -351,6 +357,42 @@ public sealed class CertificadosApiTests : ApiTestBase
         );
 
         // Act
+        StatusSolicitacaoResponse? status = null;
+
+        for (int tentativa = 0; tentativa < 20; tentativa++)
+        {
+            HttpResponseMessage statusResponse =
+                await Client.GetAsync(
+                    $"/cursos/{cursoId}/status"
+                );
+
+            Assert.AreEqual(
+                HttpStatusCode.OK,
+                statusResponse.StatusCode
+            );
+
+            status =
+                await statusResponse.Content
+                    .ReadFromJsonAsync<StatusSolicitacaoResponse>();
+
+            Assert.IsNotNull(status);
+
+            if (status.Status == StatusProcessamento.Concluido ||
+                status.Status == StatusProcessamento.Falha)
+            {
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        Assert.IsNotNull(status);
+
+        Assert.AreEqual(
+            StatusProcessamento.Concluido,
+            status.Status
+        );
+
         HttpResponseMessage response =
             await Client.GetAsync(
                 $"/cursos/{cursoId}/certificados"
@@ -381,23 +423,17 @@ public sealed class CertificadosApiTests : ApiTestBase
             2,
             resultado);
 
-        Assert.AreEqual(
-            "Aluno 1",
-            resultado[0].NomeAluno
-        );
-
-        Assert.AreEqual(
-            "Aluno 2",
-            resultado[1].NomeAluno
-        );
-
+        CollectionAssert.AreEquivalent(
+     new[] { "Aluno 1", "Aluno 2" },
+     resultado.Select(x => x.NomeAluno).ToArray()
+ );
         Assert.AreEqual(
             cursoId,
             resultado[0].CursoId
         );
 
         Assert.AreEqual(
-            StatusCertificado.Pendente,
+            StatusCertificado.Gerado,
             resultado[0].Status
         );
     }
@@ -412,6 +448,167 @@ public sealed class CertificadosApiTests : ApiTestBase
         HttpResponseMessage response =
             await Client.GetAsync(
                 $"/cursos/{cursoId}/certificados"
+            );
+
+        // Assert
+        Assert.AreEqual(
+            HttpStatusCode.Unauthorized,
+            response.StatusCode
+        );
+    }
+
+    [TestMethod]
+    public async Task DeveBaixar_Certificados()
+    {
+        // Arrange
+        Guid cursoId = await CriarCurso();
+
+        string email = GerarEmail();
+        string senha = "Senha@123";
+
+        await AutenticarUsuario(
+            email,
+            senha
+        );
+
+        var request =
+            new SolicitarCertificadosRequest(
+                [
+                    "Aluno 1",
+                "Aluno 2"
+                ]
+            );
+
+        HttpResponseMessage solicitacaoResponse =
+            await Client.PostAsJsonAsync(
+                $"/cursos/{cursoId}/certificados",
+                request
+            );
+
+        Assert.AreEqual(
+            HttpStatusCode.Accepted,
+            solicitacaoResponse.StatusCode
+        );
+
+        SolicitarCertificadosResponse? solicitacao =
+            await solicitacaoResponse.Content
+                .ReadFromJsonAsync<SolicitarCertificadosResponse>();
+
+        Assert.IsNotNull(solicitacao);
+
+        RegistrarSolicitacaoCriada(
+            solicitacao.Id
+        );
+
+        StatusSolicitacaoResponse? status = null;
+
+        for (int tentativa = 0; tentativa < 20; tentativa++)
+        {
+            HttpResponseMessage statusResponse =
+                await Client.GetAsync(
+                    $"/cursos/{cursoId}/status"
+                );
+
+            Assert.AreEqual(
+                HttpStatusCode.OK,
+                statusResponse.StatusCode
+            );
+
+            status =
+                await statusResponse.Content
+                    .ReadFromJsonAsync<StatusSolicitacaoResponse>();
+
+            Assert.IsNotNull(status);
+
+            if (status.Status == StatusProcessamento.Concluido ||
+                status.Status == StatusProcessamento.Falha)
+            {
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        Assert.IsNotNull(status);
+
+        Assert.AreEqual(
+            StatusProcessamento.Concluido,
+            status.Status
+        );
+
+        // Act
+        HttpResponseMessage response =
+            await Client.GetAsync(
+                $"/cursos/{cursoId}/certificados/download"
+            );
+
+        // Assert
+        Assert.AreEqual(
+            HttpStatusCode.OK,
+            response.StatusCode
+        );
+
+        Assert.AreEqual(
+            "application/zip",
+            response.Content.Headers.ContentType?.MediaType
+        );
+
+        byte[] conteudo =
+            await response.Content.ReadAsByteArrayAsync();
+
+        Assert.IsNotEmpty(conteudo);
+
+        Assert.IsTrue(
+response.Content.Headers.ContentDisposition?.FileName
+                ?.Contains("certificados"));
+    }
+
+    [TestMethod]
+    public async Task DeveRetornar_NaoEncontradoAoBaixarCertificadosDeCursoSemSolicitacao()
+    {
+        // Arrange
+        Guid cursoId = await CriarCurso();
+
+        string email = GerarEmail();
+        string senha = "Senha@123";
+
+        await AutenticarUsuario(
+            email,
+            senha
+        );
+
+        // Act
+        HttpResponseMessage response =
+            await Client.GetAsync(
+                $"/cursos/{cursoId}/certificados/download"
+            );
+
+        string corpo =
+            await response.Content.ReadAsStringAsync();
+
+        Console.WriteLine(
+            $"STATUS: {(int)response.StatusCode} - {response.StatusCode}"
+        );
+
+        Console.WriteLine($"CORPO: {corpo}");
+
+        // Assert
+        Assert.AreEqual(
+            HttpStatusCode.NotFound,
+            response.StatusCode
+        );
+    }
+
+    [TestMethod]
+    public async Task DeveRetornar_UnauthorizedAoBaixarCertificadosSemToken()
+    {
+        // Arrange
+        Guid cursoId = Guid.CreateVersion7();
+
+        // Act
+        HttpResponseMessage response =
+            await Client.GetAsync(
+                $"/cursos/{cursoId}/certificados/download"
             );
 
         // Assert

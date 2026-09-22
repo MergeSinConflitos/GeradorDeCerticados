@@ -11,14 +11,14 @@ public sealed record DetalhesCertificadoDto(
     DateTime DataConclusao
 );
 
-public sealed class GeradorPdfCertificado 
-{   
+public class GeradorPdfCertificado
+{
     public static void ConfiguracaoQuestPdf()
     {
         QuestPDF.Settings.License = LicenseType.Community;
     }
-    
-    public byte[] Gerar(DetalhesCertificadoDto certificado)
+
+    public virtual byte[] Gerar(DetalhesCertificadoDto certificado)
     {
         return CriarDocumento(certificado).GeneratePdf();
     }
