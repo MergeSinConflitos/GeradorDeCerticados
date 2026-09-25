@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using GeradorDeCertificados.Aplicacao.Modulos.Certificados;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -132,7 +133,12 @@ builder.Services
         ].Link = ProblemDetailsTypes.Conflict;
     });
 
-
+builder.Services.AddControllers()
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add
+    (new JsonStringEnumConverter());
+});
 // ============================================================
 // PROBLEM DETAILS
 // ============================================================
