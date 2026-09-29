@@ -14,6 +14,17 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 
 // ============================================================
 // CONFIGURAÇÃO DO JWT
@@ -294,6 +305,8 @@ app.UseStatusCodePages();
 // Redireciona requisições HTTP para HTTPS.
 app.UseHttpsRedirection();
 
+
+app.UseCors("Frontend");
 
 // ============================================================
 // AUTENTICAÇÃO E AUTORIZAÇÃO
