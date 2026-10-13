@@ -58,4 +58,30 @@ public sealed class CursoController(IMediator mediator) : ControllerBase
             curso.DataConclusao
         ));
     }
+
+    [HttpGet]
+    [ProducesResponseType<List<CursoResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<CursoResponse>>> Listar(
+    CancellationToken cancellationToken)
+    {
+        var resultado = await mediator.Send(
+            new ListarCursosQuery(),
+            cancellationToken
+        );
+
+        if (!resultado.IsSuccess)
+            return this.ProblemDetails(resultado);
+
+        List<CursoResponse> response = resultado.Value
+            .Select(curso => new CursoResponse(
+                curso.Id,
+                curso.Nome,
+                curso.Descricao,
+                curso.CargaHoraria,
+                curso.DataConclusao
+            ))
+            .ToList();
+
+        return Ok(response);
+    }
 }

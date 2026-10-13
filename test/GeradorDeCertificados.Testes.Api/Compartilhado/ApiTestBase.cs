@@ -130,6 +130,15 @@ public abstract class ApiTestBase
             }
         }
 
+        int cursosRestantes =
+    await dbContext.Set<Curso>().CountAsync();
+
+        Console.WriteLine(
+            $"Cursos restantes após cleanup: {cursosRestantes}"
+        );
+
+
+
         Console.WriteLine("=== CLEANUP FINALIZADO ===");
     }
 }

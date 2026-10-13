@@ -1,6 +1,9 @@
+
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using GeradorDeCertificados.Dominio.Modulos.Certificados;
 using GeradorDeCertificados.Dominio.Modulos.Cursos;
 using GeradorDeCertificados.Infraestrutura.Compartilhado.Orm;
@@ -15,6 +18,9 @@ namespace GeradorDeCertificados.Testes.Api.Modulos.Certificados;
 [DoNotParallelize]
 public sealed class CertificadosApiTests : ApiTestBase
 {
+    private static readonly JsonSerializerOptions OpcoesJson =
+        CriarOpcoesJson();
+
     [TestMethod]
     public async Task DeveSolicitar_Certificados()
     {
@@ -25,12 +31,9 @@ public sealed class CertificadosApiTests : ApiTestBase
         string senha = "Senha@123";
 
         var cadastroRequest =
-            new CadastrarUsuarioRequest(
-                email,
-                senha
-            );
+            new CadastrarUsuarioRequest(email, senha);
 
-        HttpResponseMessage cadastroResponse =
+        using HttpResponseMessage cadastroResponse =
             await Client.PostAsJsonAsync(
                 "/auth/cadastro",
                 cadastroRequest
@@ -50,12 +53,9 @@ public sealed class CertificadosApiTests : ApiTestBase
         RegistrarUsuarioCriado(cadastro.Id);
 
         var loginRequest =
-            new AutenticarUsuarioRequest(
-                email,
-                senha
-            );
+            new AutenticarUsuarioRequest(email, senha);
 
-        HttpResponseMessage loginResponse =
+        using HttpResponseMessage loginResponse =
             await Client.PostAsJsonAsync(
                 "/auth/login",
                 loginRequest
@@ -87,7 +87,7 @@ public sealed class CertificadosApiTests : ApiTestBase
             );
 
         // Act
-        HttpResponseMessage response =
+        using HttpResponseMessage response =
             await Client.PostAsJsonAsync(
                 $"/cursos/{cursoId}/certificados",
                 request
@@ -109,8 +109,10 @@ public sealed class CertificadosApiTests : ApiTestBase
         );
 
         SolicitarCertificadosResponse? resultado =
-            await response.Content
-                .ReadFromJsonAsync<SolicitarCertificadosResponse>();
+            JsonSerializer.Deserialize<SolicitarCertificadosResponse>(
+                corpo,
+                OpcoesJson
+            );
 
         Assert.IsNotNull(resultado);
 
@@ -138,20 +140,15 @@ public sealed class CertificadosApiTests : ApiTestBase
         // Arrange
         Guid cursoId = await CriarCurso();
 
-        string email = GerarEmail();
-        string senha = "Senha@123";
-
         await AutenticarUsuario(
-            email,
-            senha
+            GerarEmail(),
+            "Senha@123"
         );
 
         var primeiraRequest =
-            new SolicitarCertificadosRequest(
-                ["Aluno 1"]
-            );
+            new SolicitarCertificadosRequest(["Aluno 1"]);
 
-        HttpResponseMessage primeiraResponse =
+        using HttpResponseMessage primeiraResponse =
             await Client.PostAsJsonAsync(
                 $"/cursos/{cursoId}/certificados",
                 primeiraRequest
@@ -168,25 +165,20 @@ public sealed class CertificadosApiTests : ApiTestBase
 
         Assert.IsNotNull(primeiraSolicitacao);
 
-        RegistrarSolicitacaoCriada(
-            primeiraSolicitacao.Id
-        );
+        RegistrarSolicitacaoCriada(primeiraSolicitacao.Id);
 
         var segundaRequest =
-            new SolicitarCertificadosRequest(
-                ["Aluno 2"]
-            );
+            new SolicitarCertificadosRequest(["Aluno 2"]);
 
         // Act
-        HttpResponseMessage segundaResponse =
+        using HttpResponseMessage segundaResponse =
             await Client.PostAsJsonAsync(
                 $"/cursos/{cursoId}/certificados",
                 segundaRequest
             );
 
         string corpo =
-            await segundaResponse.Content
-                .ReadAsStringAsync();
+            await segundaResponse.Content.ReadAsStringAsync();
 
         Console.WriteLine(
             $"STATUS: {(int)segundaResponse.StatusCode} - {segundaResponse.StatusCode}"
@@ -208,12 +200,10 @@ public sealed class CertificadosApiTests : ApiTestBase
         Guid cursoId = Guid.CreateVersion7();
 
         var request =
-            new SolicitarCertificadosRequest(
-                ["Aluno 1"]
-            );
+            new SolicitarCertificadosRequest(["Aluno 1"]);
 
         // Act
-        HttpResponseMessage response =
+        using HttpResponseMessage response =
             await Client.PostAsJsonAsync(
                 $"/cursos/{cursoId}/certificados",
                 request
@@ -232,12 +222,9 @@ public sealed class CertificadosApiTests : ApiTestBase
         // Arrange
         Guid cursoId = await CriarCurso();
 
-        string email = GerarEmail();
-        string senha = "Senha@123";
-
         await AutenticarUsuario(
-            email,
-            senha
+            GerarEmail(),
+            "Senha@123"
         );
 
         var request =
@@ -248,7 +235,7 @@ public sealed class CertificadosApiTests : ApiTestBase
                 ]
             );
 
-        HttpResponseMessage solicitacaoResponse =
+        using HttpResponseMessage solicitacaoResponse =
             await Client.PostAsJsonAsync(
                 $"/cursos/{cursoId}/certificados",
                 request
@@ -265,43 +252,13 @@ public sealed class CertificadosApiTests : ApiTestBase
 
         Assert.IsNotNull(solicitacao);
 
-        RegistrarSolicitacaoCriada(
-            solicitacao.Id
-        );
+        RegistrarSolicitacaoCriada(solicitacao.Id);
 
         // Act
-        StatusSolicitacaoResponse? resultado = null;
-
-        for (int tentativa = 0; tentativa < 20; tentativa++)
-        {
-            HttpResponseMessage response =
-                await Client.GetAsync(
-                    $"/cursos/{cursoId}/status"
-                );
-
-            Assert.AreEqual(
-                HttpStatusCode.OK,
-                response.StatusCode
-            );
-
-            resultado =
-                await response.Content
-                    .ReadFromJsonAsync<StatusSolicitacaoResponse>();
-
-            Assert.IsNotNull(resultado);
-
-            if (resultado.Status == StatusProcessamento.Concluido ||
-                resultado.Status == StatusProcessamento.Falha)
-            {
-                break;
-            }
-
-            await Task.Delay(100);
-        }
+        StatusSolicitacaoResponse resultado =
+            await ObterStatusSolicitacao(cursoId);
 
         // Assert
-        Assert.IsNotNull(resultado);
-
         Assert.AreEqual(
             cursoId,
             resultado.CursoId
@@ -319,12 +276,9 @@ public sealed class CertificadosApiTests : ApiTestBase
         // Arrange
         Guid cursoId = await CriarCurso();
 
-        string email = GerarEmail();
-        string senha = "Senha@123";
-
         await AutenticarUsuario(
-            email,
-            senha
+            GerarEmail(),
+            "Senha@123"
         );
 
         var request =
@@ -335,7 +289,7 @@ public sealed class CertificadosApiTests : ApiTestBase
                 ]
             );
 
-        HttpResponseMessage solicitacaoResponse =
+        using HttpResponseMessage solicitacaoResponse =
             await Client.PostAsJsonAsync(
                 $"/cursos/{cursoId}/certificados",
                 request
@@ -352,48 +306,18 @@ public sealed class CertificadosApiTests : ApiTestBase
 
         Assert.IsNotNull(solicitacao);
 
-        RegistrarSolicitacaoCriada(
-            solicitacao.Id
-        );
+        RegistrarSolicitacaoCriada(solicitacao.Id);
 
         // Act
-        StatusSolicitacaoResponse? status = null;
-
-        for (int tentativa = 0; tentativa < 20; tentativa++)
-        {
-            HttpResponseMessage statusResponse =
-                await Client.GetAsync(
-                    $"/cursos/{cursoId}/status"
-                );
-
-            Assert.AreEqual(
-                HttpStatusCode.OK,
-                statusResponse.StatusCode
-            );
-
-            status =
-                await statusResponse.Content
-                    .ReadFromJsonAsync<StatusSolicitacaoResponse>();
-
-            Assert.IsNotNull(status);
-
-            if (status.Status == StatusProcessamento.Concluido ||
-                status.Status == StatusProcessamento.Falha)
-            {
-                break;
-            }
-
-            await Task.Delay(100);
-        }
-
-        Assert.IsNotNull(status);
+        StatusSolicitacaoResponse status =
+            await ObterStatusSolicitacao(cursoId);
 
         Assert.AreEqual(
             StatusProcessamento.Concluido,
             status.Status
         );
 
-        HttpResponseMessage response =
+        using HttpResponseMessage response =
             await Client.GetAsync(
                 $"/cursos/{cursoId}/certificados"
             );
@@ -414,19 +338,20 @@ public sealed class CertificadosApiTests : ApiTestBase
         );
 
         List<CertificadoResponse>? resultado =
-            await response.Content
-                .ReadFromJsonAsync<List<CertificadoResponse>>();
+            JsonSerializer.Deserialize<List<CertificadoResponse>>(
+                corpo,
+                OpcoesJson
+            );
 
         Assert.IsNotNull(resultado);
 
-        Assert.HasCount(
-            2,
-            resultado);
+        Assert.HasCount(2, resultado);
 
         CollectionAssert.AreEquivalent(
-     new[] { "Aluno 1", "Aluno 2" },
-     resultado.Select(x => x.NomeAluno).ToArray()
- );
+            new[] { "Aluno 1", "Aluno 2" },
+            resultado.Select(x => x.NomeAluno).ToArray()
+        );
+
         Assert.AreEqual(
             cursoId,
             resultado[0].CursoId
@@ -445,7 +370,7 @@ public sealed class CertificadosApiTests : ApiTestBase
         Guid cursoId = Guid.CreateVersion7();
 
         // Act
-        HttpResponseMessage response =
+        using HttpResponseMessage response =
             await Client.GetAsync(
                 $"/cursos/{cursoId}/certificados"
             );
@@ -463,23 +388,20 @@ public sealed class CertificadosApiTests : ApiTestBase
         // Arrange
         Guid cursoId = await CriarCurso();
 
-        string email = GerarEmail();
-        string senha = "Senha@123";
-
         await AutenticarUsuario(
-            email,
-            senha
+            GerarEmail(),
+            "Senha@123"
         );
 
         var request =
             new SolicitarCertificadosRequest(
                 [
                     "Aluno 1",
-                "Aluno 2"
+                    "Aluno 2"
                 ]
             );
 
-        HttpResponseMessage solicitacaoResponse =
+        using HttpResponseMessage solicitacaoResponse =
             await Client.PostAsJsonAsync(
                 $"/cursos/{cursoId}/certificados",
                 request
@@ -496,40 +418,10 @@ public sealed class CertificadosApiTests : ApiTestBase
 
         Assert.IsNotNull(solicitacao);
 
-        RegistrarSolicitacaoCriada(
-            solicitacao.Id
-        );
+        RegistrarSolicitacaoCriada(solicitacao.Id);
 
-        StatusSolicitacaoResponse? status = null;
-
-        for (int tentativa = 0; tentativa < 20; tentativa++)
-        {
-            HttpResponseMessage statusResponse =
-                await Client.GetAsync(
-                    $"/cursos/{cursoId}/status"
-                );
-
-            Assert.AreEqual(
-                HttpStatusCode.OK,
-                statusResponse.StatusCode
-            );
-
-            status =
-                await statusResponse.Content
-                    .ReadFromJsonAsync<StatusSolicitacaoResponse>();
-
-            Assert.IsNotNull(status);
-
-            if (status.Status == StatusProcessamento.Concluido ||
-                status.Status == StatusProcessamento.Falha)
-            {
-                break;
-            }
-
-            await Task.Delay(100);
-        }
-
-        Assert.IsNotNull(status);
+        StatusSolicitacaoResponse status =
+            await ObterStatusSolicitacao(cursoId);
 
         Assert.AreEqual(
             StatusProcessamento.Concluido,
@@ -537,7 +429,7 @@ public sealed class CertificadosApiTests : ApiTestBase
         );
 
         // Act
-        HttpResponseMessage response =
+        using HttpResponseMessage response =
             await Client.GetAsync(
                 $"/cursos/{cursoId}/certificados/download"
             );
@@ -559,8 +451,10 @@ public sealed class CertificadosApiTests : ApiTestBase
         Assert.IsNotEmpty(conteudo);
 
         Assert.IsTrue(
-response.Content.Headers.ContentDisposition?.FileName
-                ?.Contains("certificados"));
+            response.Content.Headers.ContentDisposition?
+                .FileName?
+                .Contains("certificados") == true
+        );
     }
 
     [TestMethod]
@@ -569,16 +463,13 @@ response.Content.Headers.ContentDisposition?.FileName
         // Arrange
         Guid cursoId = await CriarCurso();
 
-        string email = GerarEmail();
-        string senha = "Senha@123";
-
         await AutenticarUsuario(
-            email,
-            senha
+            GerarEmail(),
+            "Senha@123"
         );
 
         // Act
-        HttpResponseMessage response =
+        using HttpResponseMessage response =
             await Client.GetAsync(
                 $"/cursos/{cursoId}/certificados/download"
             );
@@ -606,7 +497,7 @@ response.Content.Headers.ContentDisposition?.FileName
         Guid cursoId = Guid.CreateVersion7();
 
         // Act
-        HttpResponseMessage response =
+        using HttpResponseMessage response =
             await Client.GetAsync(
                 $"/cursos/{cursoId}/certificados/download"
             );
@@ -618,24 +509,64 @@ response.Content.Headers.ContentDisposition?.FileName
         );
     }
 
+    private async Task<StatusSolicitacaoResponse> ObterStatusSolicitacao(
+        Guid cursoId)
+    {
+        for (int tentativa = 0; tentativa < 50; tentativa++)
+        {
+            using HttpResponseMessage response =
+                await Client.GetAsync(
+                    $"/cursos/{cursoId}/status"
+                );
+
+            Assert.AreEqual(
+                HttpStatusCode.OK,
+                response.StatusCode
+            );
+
+            StatusSolicitacaoResponse? resultado =
+                await response.Content
+                    .ReadFromJsonAsync<StatusSolicitacaoResponse>(
+                        OpcoesJson
+                    );
+
+            Assert.IsNotNull(resultado);
+
+            if (resultado.Status == StatusProcessamento.Concluido ||
+                resultado.Status == StatusProcessamento.Falha)
+            {
+                return resultado;
+            }
+
+            await Task.Delay(200);
+        }
+
+        Assert.Fail(
+            $"O processamento do curso {cursoId} não terminou dentro do tempo esperado."
+        );
+
+        throw new InvalidOperationException();
+    }
+
     private async Task<Guid> CriarCurso()
     {
         Guid cursoId = Guid.CreateVersion7();
 
         Curso curso = new(
-      cursoId,
-      "Curso de C#",
-      "Curso completo de C# e .NET",
-      40,
-      new DateTime(
-          2026,
-          9,
-          20,
-          0,
-          0,
-          0,
-          DateTimeKind.Utc)
-  );
+            cursoId,
+            "Curso de C#",
+            "Curso completo de C# e .NET",
+            40,
+            new DateTime(
+                2026,
+                9,
+                20,
+                0,
+                0,
+                0,
+                DateTimeKind.Utc
+            )
+        );
 
         using IServiceScope scope =
             Factory.Services.CreateScope();
@@ -663,7 +594,7 @@ response.Content.Headers.ContentDisposition?.FileName
                 senha
             );
 
-        HttpResponseMessage cadastroResponse =
+        using HttpResponseMessage cadastroResponse =
             await Client.PostAsJsonAsync(
                 "/auth/cadastro",
                 cadastroRequest
@@ -688,7 +619,7 @@ response.Content.Headers.ContentDisposition?.FileName
                 senha
             );
 
-        HttpResponseMessage loginResponse =
+        using HttpResponseMessage loginResponse =
             await Client.PostAsJsonAsync(
                 "/auth/login",
                 loginRequest
@@ -710,6 +641,18 @@ response.Content.Headers.ContentDisposition?.FileName
                 "Bearer",
                 login.AccessToken
             );
+    }
+
+    private static JsonSerializerOptions CriarOpcoesJson()
+    {
+        JsonSerializerOptions opcoes =
+            new(JsonSerializerDefaults.Web);
+
+        opcoes.Converters.Add(
+            new JsonStringEnumConverter()
+        );
+
+        return opcoes;
     }
 
     private static string GerarEmail()

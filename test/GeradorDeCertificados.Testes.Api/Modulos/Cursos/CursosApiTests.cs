@@ -6,6 +6,7 @@ using GeradorDeCertificados.Api.Modulos.Cursos;
 using GeradorDeCertificados.Dominio.Modulos.Cursos;
 using GeradorDeCertificados.Infraestrutura.Compartilhado.Orm;
 using GeradorDeCertificados.Testes.Api.Compartilhado;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using static GeradorDeCertificados.Api.Modulos.Usuarios.UsuarioContracts;
 
@@ -258,6 +259,129 @@ public sealed class CursosApiTests : ApiTestBase
             response.StatusCode);
     }
 
+    [TestMethod]
+    public async Task DeveListar_TodosOsCursos()
+    {
+        await LimparCursos();
+        // Arrange
+        Guid cursoId1 = await CriarCurso();
+
+        Guid cursoId2 = Guid.CreateVersion7();
+
+        Curso curso2 = new(
+            cursoId2,
+            "Curso de React",
+            "Fundamentos do React",
+            30,
+            new DateTime(
+                2026,
+                10,
+                10,
+                0,
+                0,
+                0,
+                DateTimeKind.Utc));
+
+        using (IServiceScope scope =
+            Factory.Services.CreateScope())
+        {
+            GeradorDeCertificadoDbContext dbContext =
+                scope.ServiceProvider
+                    .GetRequiredService<GeradorDeCertificadoDbContext>();
+
+            dbContext.Set<Curso>().Add(curso2);
+
+            await dbContext.SaveChangesAsync();
+        }
+
+        RegistrarCursoCriado(cursoId2);
+
+        string email = GerarEmail();
+        string senha = "Senha@123";
+
+        await AutenticarUsuario(email, senha);
+
+        // Act
+        HttpResponseMessage response =
+            await Client.GetAsync("/Api/cursos");
+
+        string corpo =
+            await response.Content.ReadAsStringAsync();
+
+        Console.WriteLine(
+            $"STATUS: {(int)response.StatusCode} - {response.StatusCode}");
+
+        Console.WriteLine($"CORPO: {corpo}");
+
+        // Assert
+        Assert.AreEqual(
+            HttpStatusCode.OK,
+            response.StatusCode);
+
+        List<CursoResponse>? resultado =
+            await response.Content
+                .ReadFromJsonAsync<List<CursoResponse>>();
+
+        Assert.IsNotNull(resultado);
+        Assert.HasCount(2, resultado);
+
+        CursoResponse? primeiroCurso =
+            resultado.SingleOrDefault(x => x.Id == cursoId1);
+
+        CursoResponse? segundoCurso =
+            resultado.SingleOrDefault(x => x.Id == cursoId2);
+
+        Assert.IsNotNull(primeiroCurso);
+        Assert.AreEqual("Curso de C#", primeiroCurso.Nome);
+        Assert.AreEqual(
+            "Curso completo de C# e .NET",
+            primeiroCurso.Descricao);
+        Assert.AreEqual(40, primeiroCurso.CargaHoraria);
+
+        Assert.IsNotNull(segundoCurso);
+        Assert.AreEqual("Curso de React", segundoCurso.Nome);
+        Assert.AreEqual(
+            "Fundamentos do React",
+            segundoCurso.Descricao);
+        Assert.AreEqual(30, segundoCurso.CargaHoraria);
+    }
+
+    [TestMethod]
+    public async Task DeveRetornar_ListaVaziaQuandoNaoExistiremCursos()
+    {
+        // Arrange
+        string email = GerarEmail();
+        string senha = "Senha@123";
+
+        await LimparCursos();
+
+        await AutenticarUsuario(email, senha);
+
+        // Act
+        HttpResponseMessage response =
+            await Client.GetAsync("/Api/cursos");
+
+        string corpo =
+            await response.Content.ReadAsStringAsync();
+
+        Console.WriteLine(
+            $"STATUS: {(int)response.StatusCode} - {response.StatusCode}");
+
+        Console.WriteLine($"CORPO: {corpo}");
+
+        // Assert
+        Assert.AreEqual(
+            HttpStatusCode.OK,
+            response.StatusCode);
+
+        List<CursoResponse>? resultado =
+            await response.Content
+                .ReadFromJsonAsync<List<CursoResponse>>();
+
+        Assert.IsNotNull(resultado);
+        Assert.IsEmpty(resultado);
+    }
+
     private async Task<Guid> CriarCurso()
     {
         Guid cursoId = Guid.CreateVersion7();
@@ -347,5 +471,16 @@ public sealed class CursosApiTests : ApiTestBase
     private static string GerarEmail()
     {
         return $"igor{Guid.NewGuid():N}@email.com";
+    }
+
+    private async Task LimparCursos()
+    {
+        using IServiceScope scope = Factory.Services.CreateScope();
+
+        GeradorDeCertificadoDbContext dbContext =
+            scope.ServiceProvider
+                .GetRequiredService<GeradorDeCertificadoDbContext>();
+
+        await dbContext.Set<Curso>().ExecuteDeleteAsync();
     }
 }
